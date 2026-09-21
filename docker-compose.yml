@@ -3,10 +3,17 @@
 # SELENIUM_REMOTE_URL=http://localhost:4444/wd/hub (or
 # http://selenium-hub:4444/wd/hub for a test runner that is itself a
 # container on this same compose network).
+#
+# The hub has no container-level healthcheck: the bundled node images
+# don't reliably ship a `curl` binary at a fixed path across releases,
+# and depends_on/service_healthy would tie node startup to it. Instead,
+# nodes start alongside the hub and retry their event-bus registration
+# on their own, and callers (including this repo's CI) poll the hub's
+# /wd/hub/status endpoint from outside the container before using it.
 
 services:
   selenium-hub:
-    image: selenium/hub:4.25.0-20240922
+    image: selenium/hub:4.49.0-20260909
     container_name: selenium-hub
     ports:
       - "4442:4442" # event bus publish
@@ -17,19 +24,12 @@ services:
       - SE_SESSION_RETRY_INTERVAL=2
     networks:
       - selenium-grid
-    healthcheck:
-      test: ["CMD", "/opt/bin/curl", "-sSL", "http://localhost:4444/wd/hub/status"]
-      interval: 5s
-      timeout: 5s
-      retries: 30
-      start_period: 10s
 
   chrome:
-    image: selenium/node-chrome:4.25.0-20240922
+    image: selenium/node-chrome:4.49.0-20260909
     shm_size: 2gb
     depends_on:
-      selenium-hub:
-        condition: service_healthy
+      - selenium-hub
     environment:
       - SE_EVENT_BUS_HOST=selenium-hub
       - SE_EVENT_BUS_PUBLISH_PORT=4442
@@ -40,11 +40,10 @@ services:
       - selenium-grid
 
   firefox:
-    image: selenium/node-firefox:4.25.0-20240922
+    image: selenium/node-firefox:4.49.0-20260909
     shm_size: 2gb
     depends_on:
-      selenium-hub:
-        condition: service_healthy
+      - selenium-hub
     environment:
       - SE_EVENT_BUS_HOST=selenium-hub
       - SE_EVENT_BUS_PUBLISH_PORT=4442

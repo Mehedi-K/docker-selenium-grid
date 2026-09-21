@@ -1,7 +1,7 @@
 # docker-selenium-grid
 
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
-![Selenium Grid](https://img.shields.io/badge/Selenium%20Grid-4.25-43B02A?logo=selenium&logoColor=white)
+![Selenium Grid](https://img.shields.io/badge/Selenium%20Grid-4.49-43B02A?logo=selenium&logoColor=white)
 ![Python](https://img.shields.io/badge/Python-3.11-3776AB?logo=python&logoColor=white)
 ![pytest](https://img.shields.io/badge/Tests-pytest-0A9EDC?logo=pytest&logoColor=white)
 ![CI](https://github.com/Mehedi-K/docker-selenium-grid/actions/workflows/ci.yml/badge.svg)
