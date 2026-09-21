@@ -1,0 +1,71 @@
+name: Selenium Grid CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  grid-smoke-test:
+    name: Bring up grid and run smoke tests (${{ matrix.browser }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install smoke-test dependencies
+        run: pip install -r smoke-tests/requirements.txt
+
+      - name: Start Selenium Grid
+        run: docker compose up -d
+
+      - name: Wait for hub to report healthy
+        run: |
+          echo "Polling http://localhost:4444/wd/hub/status ..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:4444/wd/hub/status | grep -q '"ready": *true'; then
+              echo "Grid hub is ready."
+              exit 0
+            fi
+            echo "Not ready yet (attempt $i/30), retrying in 5s..."
+            sleep 5
+          done
+          echo "Grid hub never became ready in time."
+          docker compose logs
+          exit 1
+
+      - name: Run smoke tests against the grid
+        env:
+          SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub
+          BROWSER: ${{ matrix.browser }}
+        run: |
+          pytest smoke-tests/ -v --junitxml=smoke-tests/junit-${{ matrix.browser }}.xml
+
+      - name: Dump grid logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Upload test artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-artifacts-${{ matrix.browser }}
+          path: |
+            smoke-tests/screenshots/
+            smoke-tests/junit-${{ matrix.browser }}.xml
+          if-no-files-found: ignore
+
+      - name: Tear down Selenium Grid
+        if: always()
+        run: docker compose down -v
