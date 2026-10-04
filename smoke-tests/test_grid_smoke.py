@@ -6,6 +6,7 @@ small public site built for exercising exactly this kind of UI automation.
 If these pass, the grid is correctly routing sessions to browser nodes.
 """
 
+from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
@@ -60,11 +61,27 @@ def test_dropdown_select_option(driver):
     assert dropdown.first_selected_option.text == "Option 2"
 
 
+def _open_with_start_handler_bound(driver, url, attempts=3):
+    # The demo's Heroku host intermittently 503s its own scripts (jQuery included).
+    handler_bound = (
+        "const b = document.querySelector('#start button');"
+        "return !!(b && window.jQuery && jQuery._data(b, 'events'));"
+    )
+    for _ in range(attempts):
+        driver.get(url)
+        try:
+            WebDriverWait(driver, 10).until(lambda d: d.execute_script(handler_bound))
+            return
+        except TimeoutException:
+            continue
+    raise AssertionError(f"{url} never wired its Start button after {attempts} loads")
+
+
 def test_dynamic_loading_element_eventually_appears(driver):
-    driver.get(f"{BASE_URL}/dynamic_loading/1")
+    _open_with_start_handler_bound(driver, f"{BASE_URL}/dynamic_loading/1")
     driver.find_element(By.CSS_SELECTOR, "#start button").click()
 
-    finish_text = WebDriverWait(driver, 10).until(
+    finish_text = WebDriverWait(driver, 15).until(
         EC.visibility_of_element_located((By.ID, "finish"))
     )
     assert "Hello World!" in finish_text.text
