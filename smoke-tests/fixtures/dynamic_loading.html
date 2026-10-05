@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Dynamic Loading Fixture</title>
+</head>
+<body>
+  <h3>Dynamically Loaded Page Elements</h3>
+  <div id="start"><button type="button">Start</button></div>
+  <div id="loading" hidden>Loading...</div>
+  <div id="finish" hidden><h4>Hello World!</h4></div>
+  <script>
+    document.querySelector('#start button').addEventListener('click', function () {
+      document.getElementById('start').hidden = true;
+      document.getElementById('loading').hidden = false;
+      setTimeout(function () {
+        document.getElementById('loading').hidden = true;
+        document.getElementById('finish').hidden = false;
+      }, 2000);
+    });
+  </script>
+</body>
+</html>

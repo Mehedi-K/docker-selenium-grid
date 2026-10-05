@@ -56,7 +56,9 @@ browser nodes, which means:
 The hub and nodes register with each other over a dedicated `selenium-grid`
 bridge network using their Compose service names (`selenium-hub`, `chrome`,
 `firefox`) — nothing is wired to a host IP or local hostname, so the same
-`docker-compose.yml` runs unmodified on any machine or CI runner.
+`docker-compose.yml` runs unmodified on any machine or CI runner. A small
+`fixtures` nginx service on the same network serves static test pages to the
+browser nodes.
 
 ## Prerequisites
 
@@ -95,6 +97,10 @@ The smoke-test suite in `smoke-tests/` is a standalone pytest project. It
 opens real `RemoteWebDriver` sessions against the grid and drives them
 through [the-internet.herokuapp.com](https://the-internet.herokuapp.com/), a
 public site built for exercising exactly this kind of browser automation.
+The timing-sensitive dynamic-loading test instead uses a page from
+`smoke-tests/fixtures/`, served inside the grid network by the compose
+`fixtures` service (`http://fixtures/`), so a slow third-party host can't
+make it flaky.
 
 ```bash
 cd smoke-tests

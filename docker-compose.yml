@@ -53,6 +53,15 @@ services:
     networks:
       - selenium-grid
 
+  # Serves smoke-tests/fixtures/ to the browser nodes as http://fixtures/ so
+  # timing-sensitive smoke tests don't depend on a third-party site's uptime.
+  fixtures:
+    image: nginx:1.29-alpine
+    volumes:
+      - ./smoke-tests/fixtures:/usr/share/nginx/html:ro
+    networks:
+      - selenium-grid
+
 networks:
   selenium-grid:
     driver: bridge
